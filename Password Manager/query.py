@@ -29,6 +29,21 @@ class DatabaseConnection:
             cursor.execute(function.value, params)
             return cursor.fetchone()[0]
         
+    
+    def get_user(self, name):
+        args = (name, )
+        
+        with self.connection.cursor() as cursor:
+            cursor.callproc("get_user", args)
+            return cursor.fetchone()
+        
+    
+    def get_credentials(self, user_id):
+        args = (user_id, )
+
+        with self.connection.cursor() as cursor:
+            cursor.callproc("get_credentials", args)
+            return cursor.fetchall()
 
     def create_credentials(self, user_id, site, username, password, pin=None):
         args = (user_id, site, username, password, pin)
