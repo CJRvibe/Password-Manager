@@ -33,3 +33,7 @@ class DatabaseConnection:
             if function is not SQLProcedures.GET_CREDENTIALS:
                 return cursor.fetchone()
             return cursor.fetchall()
+        
+    
+    def close_connection(self):
+        self.connection.close()
