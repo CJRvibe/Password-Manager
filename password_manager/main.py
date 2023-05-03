@@ -24,6 +24,13 @@ class PasswordManagerInterface:
         except exceptions.VerifyMismatchError:
             print("Wrong password, try again!")
 
+        if self.__ph.check_needs_rehash(hash):
+            self.__db.call_SQL_procedure(SQLProcedures.UPDATE_USER, 
+                                         (self.__user_id, None, None, self.__ph.hash(password)))
+            
+        *data, hashed_password = user
+        return tuple(data)
+
     
     def get_credentials(self):
         try: self.__logged_in()
