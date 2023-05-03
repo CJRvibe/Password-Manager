@@ -1,6 +1,6 @@
 from enum import Enum
 from typing import Sequence
-import mysql.connector
+import pymysql
 
 class SQLProcedures(Enum):
     CREATE_CREDENTIALS = "CALL create_credentials(%s, %s, %s, %s, %s)"
@@ -15,11 +15,10 @@ class DatabaseConnection:
 
     def __init__(self, user, password, database) -> None:
         self.database_connect(user, password, database)
-        self.logged_in_id = None
 
     
     def database_connect(self, user, password, database):
-        connection = mysql.connector.connect(
+        connection = pymysql.connect(
             user=user,
             password=password,
             database=database)
