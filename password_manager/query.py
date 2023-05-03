@@ -26,10 +26,13 @@ class DatabaseConnection:
         self.connection = connection
 
     
-    def call_SQL_function(self, function: Enum, params: Sequence):
+    def call_SQL_procedure(self, function: Enum, params: Sequence):
         with self.connection.cursor() as cursor:          
             cursor.execute(function.value, params)
-            return cursor.fetchone()[0]
+
+            if function is not SQLProcedures.GET_CREDENTIALS:
+                return cursor.fetchone()
+            return cursor.fetchall()
         
     
     def get_user(self, name):
