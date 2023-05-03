@@ -31,8 +31,11 @@ class DatabaseConnection:
             cursor.execute(function.value, params)
 
             if function is not SQLProcedures.GET_CREDENTIALS:
-                return cursor.fetchone()
-            return cursor.fetchall()
+                result =  cursor.fetchone()
+            else: result = cursor.fetchall()
+        
+        self.connection.commit()
+        return result
         
     
     def close_connection(self):
