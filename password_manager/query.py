@@ -2,11 +2,14 @@ from enum import Enum
 from typing import Sequence
 import mysql.connector
 
-class SQLFunctions(Enum):
-     GET_PASSWORD_HASH = "SELECT get_password_hash(%s)"
-     GET_USER_ID = "SELECT get_user_id(%s)"
-     GET_CREDENTIAL_ID = "SELECT get_credential_id(%s)"
-
+class SQLProcedures(Enum):
+    CREATE_CREDENTIALS = "CALL create_credentials(%s, %s, %s, %s, %s)"
+    CREATE_USER = "CALL create_user(%s, %s, %s)"
+    GET_CREDENTIALS = "CALL get_credentials(%s)"
+    GET_USER = "CALL get_user(%s)"
+    UPDATE_CREDENTIALS = "CALL update_credentials(%s, %s, %s, %s, %s)"
+    UPDATE_USER = "CALL update_user(%s, %s, %s, %s)"
+    
 
 class DatabaseConnection:
 
