@@ -3,11 +3,11 @@ from typing import Sequence
 import pymysql
 
 class SQLProcedures(Enum):
-    CREATE_CREDENTIALS = "CALL create_credentials(%s, %s, %s, %s, %s)"
+    CREATE_CREDENTIALS = "CALL create_credentials(%s, %s, %s, %s)"
     CREATE_USER = "CALL create_user(%s, %s, %s)"
     GET_CREDENTIALS = "CALL get_credentials(%s)"
     GET_USER = "CALL get_user(%s)"
-    UPDATE_CREDENTIALS = "CALL update_credentials(%s, %s, %s, %s, %s)"
+    UPDATE_CREDENTIALS = "CALL update_credentials(%s, %s, %s, %s)"
     UPDATE_USER = "CALL update_user(%s, %s, %s, %s)"
     
 
