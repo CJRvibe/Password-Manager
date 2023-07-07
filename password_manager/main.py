@@ -73,8 +73,26 @@ class PasswordManagerInterface:
         data = (self.__user_id, site, username, encrypted_password)
         credential = self.__db.call_SQL_procedure(SQLProcedures.CREATE_CREDENTIALS, data)
 
-    def get_credentials(self):
-        try: self.__logged_in()
-        except AssertionError: print("You need to login first before calling this function")
-        credentials = self.__db.call_SQL_procedure(SQLProcedures.GET_CREDENTIALS, (self.__user_id, ))
-        return credentials
+    
+    def get_credentials(self, root_password):
+        self.__logged_in()
+        self.__ph.verify(self.__phash, root_password)
+
+        data = self.__db.call_SQL_procedure(SQLProcedures.GET_CREDENTIALS, (self.__user_id, ))
+        salt_path = Path(f"{self.__username}_secrets.bin")
+        salt = salt_path.read_bytes()
+        
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=salt,
+            iterations=480000,
+            )
+        key = base64.urlsafe_b64encode(kdf.derive(root_password.encode("utf-8")))
+        f = Fernet(key)
+        new_data = []
+        for credential in data:
+            password = f.decrypt(credential[2])
+            new_data.append((credential[0], credential[1], password))
+
+        return new_data
