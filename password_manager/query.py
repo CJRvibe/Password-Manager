@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from enum import Enum
 from typing import Sequence
 import pymysql
@@ -40,3 +41,20 @@ class DatabaseConnection:
     
     def close_connection(self):
         self.connection.close()
+
+
+@dataclass
+class User:
+    id: int
+    username: str
+    email: str
+    password: str
+
+
+@dataclass
+class Credential:
+    id: int
+    user_id: int
+    site: str
+    username: str
+    password: str
