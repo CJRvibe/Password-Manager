@@ -14,10 +14,11 @@ class PasswordManagerInterface:
         self.__db = DatabaseConnection(db_user, db_password, db_name)
         self.__ph = PasswordHasher()
         self.__user = None
+        self.__phash = None
 
 
     def __logged_in(self):
-        assert self.__user_id is not None
+        assert self.__user.id is not None
 
     
     def login(self, username, password):
@@ -30,10 +31,12 @@ class PasswordManagerInterface:
             print("Wrong password, try again!")
 
         if self.__ph.check_needs_rehash(hash):
+            hash = self.__ph.hash(password)
             self.__db.call_SQL_procedure(SQLProcedures.UPDATE_USER, 
-                                         (self.__user_id, None, None, self.__ph.hash(password)))
+                                         (self.__user_id, None, None, hash))
             
         self.__user = User(*user[0:3], password)
+        self.__phash = hash
         return self.__user
     
 
@@ -54,7 +57,7 @@ class PasswordManagerInterface:
         self.__logged_in()
         self.__ph.verify(self.__phash, root_password)
 
-        salt_path = Path(f"{self.__username}_secrets.bin")
+        salt_path = Path(f"{self.__user.username}_secrets.bin")
         salt = salt_path.read_bytes()
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
@@ -66,18 +69,19 @@ class PasswordManagerInterface:
         f = Fernet(key)
         encrypted_password = f.encrypt(password.encode("utf-8"))
 
-        data = (self.__user_id, site, username, encrypted_password)
+        data = (self.__user.id, site, username, encrypted_password)
         credential = self.__db.call_SQL_procedure(SQLProcedures.CREATE_CREDENTIALS, data)
 
     
     def get_credentials(self, root_password):
         self.__logged_in()
+
         self.__ph.verify(self.__phash, root_password)
 
-        data = self.__db.call_SQL_procedure(SQLProcedures.GET_CREDENTIALS, (self.__user_id, ))
-        salt_path = Path(f"{self.__username}_secrets.bin")
+        data = self.__db.call_SQL_procedure(SQLProcedures.GET_CREDENTIALS, (self.__user.id, ))
+        salt_path = Path(f"{self.__user.username}_secrets.bin")
         salt = salt_path.read_bytes()
-        
+
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
@@ -86,9 +90,10 @@ class PasswordManagerInterface:
             )
         key = base64.urlsafe_b64encode(kdf.derive(root_password.encode("utf-8")))
         f = Fernet(key)
-        new_data = []
+        credentials = []
         for credential in data:
-            password = f.decrypt(credential[2])
-            new_data.append((credential[0], credential[1], password))
+            password = f.decrypt(credential[4])
+            credential_data = (credential[0], self.__user, *credential[2:4], password)
+            credentials.append(Credential(credential[0], self.__user, *credential[2:4], password))
 
-        return new_data
+        return credentials
