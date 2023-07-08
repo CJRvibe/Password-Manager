@@ -19,14 +19,14 @@ class PasswordManagerInterface:
 
 
     def __logged_in(self):
-        if self.__user_id == None:
+        if self.__user.id == None:
             raise NotLoggedIn("Login before calling this function")
         
     
     def __find_salt(self):
         paths = sorted(Path.home().glob("*secrets.bin"))
         for path in paths:
-            if path.stem == f"{self.__username}_secrets":
+            if path.stem == f"{self.__user.username}_secrets":
                 return path
 
     
@@ -42,7 +42,7 @@ class PasswordManagerInterface:
         if self.__ph.check_needs_rehash(hash):
             hash = self.__ph.hash(password)
             self.__db.call_SQL_procedure(SQLProcedures.UPDATE_USER, 
-                                         (self.__user_id, None, None, hash))
+                                         (self.__user.id, None, None, hash))
             
         self.__user = User(*user[0:3], password)
         self.__phash = hash
@@ -86,9 +86,9 @@ class PasswordManagerInterface:
 
         self.__ph.verify(self.__phash, root_password)
 
-        data = self.__db.call_SQL_procedure(SQLProcedures.GET_CREDENTIALS, (self.__user_id, ))
+        data = self.__db.call_SQL_procedure(SQLProcedures.GET_CREDENTIALS, (self.__user.id, ))
         salt = self.__find_salt().read_bytes()
-        print(salt)
+        
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
@@ -101,6 +101,6 @@ class PasswordManagerInterface:
         for credential in data:
             password = f.decrypt(credential[4])
             credential_data = (credential[0], self.__user, *credential[2:4], password)
-            credentials.append(Credential(credential[0], self.__user, *credential[2:4], password))
+            credentials.append(Credential(*credential_data))
 
         return credentials
