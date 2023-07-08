@@ -41,12 +41,13 @@ class PasswordManagerInterface:
         password = self.__ph.hash(password)
 
         data = (username, email, password)
-        new = self.__db.call_SQL_procedure(SQLProcedures.CREATE_USER, data)
+        self.__db.call_SQL_procedure(SQLProcedures.CREATE_USER, data)
+        user = self.__db.call_SQL_procedure(SQLProcedures.GET_USER, (username, ))
 
         salt = os.urandom(16)
         secrets_path = Path(f"{username}_secrets.bin")
         secrets_path.write_bytes(salt)
-        return User(*data)
+        return User(*user[0:3], password)
     
 
     def create_credentials(self, root_password: str, site, username, password: str):
