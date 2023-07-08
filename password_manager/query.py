@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from enum import Enum
 from typing import Sequence
 import pymysql
@@ -40,3 +41,28 @@ class DatabaseConnection:
     
     def close_connection(self):
         self.connection.close()
+
+
+@dataclass
+class User:
+    id: int
+    username: str
+    email: str
+    password: str
+
+    def __repr__(self):
+        class_name = type(self).__name__
+        return f"{class_name}(username=\"{self.username}\")"
+
+
+@dataclass
+class Credential:
+    id: int
+    main_user: User
+    site: str
+    username: str
+    password: str
+
+    def __repr__(self):
+        class_name = type(self).__name__
+        return f"{class_name}(main_user=\"{self.main_user.username}\", site=\"{self.site}\")"
