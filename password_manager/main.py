@@ -6,7 +6,7 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from .query import SQLProcedures, DatabaseConnection
-from exceptions import NotLoggedIn
+from .exceptions import NotLoggedIn
 
 
 class PasswordManagerInterface:
@@ -22,6 +22,13 @@ class PasswordManagerInterface:
     def __logged_in(self):
         if self.__user_id == None:
             raise NotLoggedIn("Login before calling this function")
+        
+    
+    def __find_salt(self):
+        paths = sorted(Path.home().glob("*secrets.bin"))
+        for path in paths:
+            if path.stem == f"{self.__username}_secrets":
+                return path
 
     
     def login(self, username, password):
@@ -51,7 +58,7 @@ class PasswordManagerInterface:
         new = self.__db.call_SQL_procedure(SQLProcedures.CREATE_USER, data)
 
         salt = os.urandom(16)
-        secrets_path = Path(f"{username}_secrets.bin")
+        secrets_path = Path.home() / Path(f"{username}_secrets.bin")
         secrets_path.write_bytes(salt)
         print(f"New account created with username {username}")
     
@@ -60,8 +67,7 @@ class PasswordManagerInterface:
         self.__logged_in()
         self.__ph.verify(self.__phash, root_password)
 
-        salt_path = Path(f"{self.__username}_secrets.bin")
-        salt = salt_path.read_bytes()
+        salt = self.__find_salt().read_bytes()
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
@@ -81,9 +87,8 @@ class PasswordManagerInterface:
         self.__ph.verify(self.__phash, root_password)
 
         data = self.__db.call_SQL_procedure(SQLProcedures.GET_CREDENTIALS, (self.__user_id, ))
-        salt_path = Path(f"{self.__username}_secrets.bin")
-        salt = salt_path.read_bytes()
-        
+        salt = self.__find_salt().read_bytes()
+        print(salt)
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
