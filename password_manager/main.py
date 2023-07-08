@@ -6,6 +6,7 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from .query import SQLProcedures, DatabaseConnection
+from exceptions import NotLoggedIn
 
 
 class PasswordManagerInterface:
@@ -19,7 +20,8 @@ class PasswordManagerInterface:
 
 
     def __logged_in(self):
-        assert self.__user_id is not None
+        if self.__user_id == None:
+            raise NotLoggedIn("Login before calling this function")
 
     
     def login(self, username, password):
