@@ -5,7 +5,7 @@ from argon2 import PasswordHasher, exceptions
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from .query import SQLProcedures, DatabaseConnection
+from .query import SQLProcedures, DatabaseConnection, User, Credential
 
 
 class PasswordManagerInterface:
@@ -13,9 +13,7 @@ class PasswordManagerInterface:
     def __init__(self, db_user, db_password, db_name):
         self.__db = DatabaseConnection(db_user, db_password, db_name)
         self.__ph = PasswordHasher()
-        self.__user_id = None
-        self.__username = None
-        self.__phash = None
+        self.__user = None
 
 
     def __logged_in(self):
@@ -35,11 +33,8 @@ class PasswordManagerInterface:
             self.__db.call_SQL_procedure(SQLProcedures.UPDATE_USER, 
                                          (self.__user_id, None, None, self.__ph.hash(password)))
             
-        self.__user_id = user[0] 
-        self.__username = user[1]
-        self.__phash = user[3]
-        *data, hashed_password = user
-        return tuple(data)
+        self.__user = User(*user[0:3], password)
+        return self.__user
     
 
     def create_account(self, username, email, password):
@@ -51,7 +46,7 @@ class PasswordManagerInterface:
         salt = os.urandom(16)
         secrets_path = Path(f"{username}_secrets.bin")
         secrets_path.write_bytes(salt)
-        print(f"New account created with username {username}")
+        return User(*data)
     
 
     def create_credentials(self, root_password: str, site, username, password: str):
