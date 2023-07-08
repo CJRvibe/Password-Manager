@@ -50,11 +50,19 @@ class User:
     email: str
     password: str
 
+    def __repr__(self):
+        class_name = type(self).__name__
+        return f"{class_name}(username=\"{self.username}\")"
+
 
 @dataclass
 class Credential:
     id: int
-    user_id: int
+    main_user: User
     site: str
     username: str
     password: str
+
+    def __repr__(self):
+        class_name = type(self).__name__
+        return f"{class_name}(main_user=\"{self.main_user.username}\", site=\"{self.site}\")"
