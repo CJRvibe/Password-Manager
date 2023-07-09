@@ -16,6 +16,7 @@ class PasswordManagerInterface:
         self.__ph = PasswordHasher()
         self.__user = None
         self.__phash = None
+        self.__key = None
 
 
     def __logged_in(self):
@@ -27,7 +28,18 @@ class PasswordManagerInterface:
         paths = sorted(Path.home().glob("*secrets.bin"))
         for path in paths:
             if path.stem == f"{self.__user.username}_secrets":
-                return path
+                return path.read_bytes()
+
+
+    def __create_key(self, root_password, salt):
+        kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=salt,
+        iterations=480000,
+        )
+        key = base64.urlsafe_b64encode(kdf.derive(root_password.encode("utf-8")))
+        return key
 
     
     def login(self, username, password):
@@ -46,6 +58,8 @@ class PasswordManagerInterface:
             
         self.__user = User(*user[0:3], password)
         self.__phash = hash
+        salt = self.__find_salt()
+        self.__key = self.__create_key(password, salt)
         return self.__user
     
 
@@ -62,41 +76,22 @@ class PasswordManagerInterface:
         return User(*user[0:3], password)
     
 
-    def create_credentials(self, root_password: str, site, username, password: str):
+    def create_credential(self, site, username, password: str):
         self.__logged_in()
-        self.__ph.verify(self.__phash, root_password)
 
-        salt = self.__find_salt().read_bytes()
-        kdf = PBKDF2HMAC(
-            algorithm=hashes.SHA256(),
-            length=32,
-            salt=salt,
-            iterations=480000,
-            )
-        key = base64.urlsafe_b64encode(kdf.derive(root_password.encode("utf-8")))
-        f = Fernet(key)
+        f = Fernet(self.__key)
         encrypted_password = f.encrypt(password.encode("utf-8"))
 
         data = (self.__user.id, site, username, encrypted_password)
         credential = self.__db.call_SQL_procedure(SQLProcedures.CREATE_CREDENTIALS, data)
 
     
-    def get_credentials(self, root_password):
+    def get_credentials(self):
         self.__logged_in()
 
-        self.__ph.verify(self.__phash, root_password)
-
         data = self.__db.call_SQL_procedure(SQLProcedures.GET_CREDENTIALS, (self.__user.id, ))
-        salt = self.__find_salt().read_bytes()
-        
-        kdf = PBKDF2HMAC(
-            algorithm=hashes.SHA256(),
-            length=32,
-            salt=salt,
-            iterations=480000,
-            )
-        key = base64.urlsafe_b64encode(kdf.derive(root_password.encode("utf-8")))
-        f = Fernet(key)
+
+        f = Fernet(self.__key)
         credentials = []
         for credential in data:
             password = f.decrypt(credential[4])
