@@ -38,7 +38,13 @@ class DatabaseConnection:
         self.connection.commit()
         return result
         
-    
+
+    def bulk_update_credentials(self, credentials):
+        with self.connection.cursor() as cursor:
+            for credential in credentials:
+                data = (credential[0], None, None, credential[1])
+                cursor.execute(SQLProcedures.UPDATE_CREDENTIALS.value, data)
+
     def close_connection(self):
         self.connection.close()
 
@@ -53,6 +59,10 @@ class User:
     def __repr__(self):
         class_name = type(self).__name__
         return f"{class_name}(username=\"{self.username}\")"
+    
+
+    def unpack(self):
+        return (self.id, self.username, self.email, self.password)
 
 
 @dataclass
@@ -66,3 +76,7 @@ class Credential:
     def __repr__(self):
         class_name = type(self).__name__
         return f"{class_name}(main_user=\"{self.main_user.username}\", site=\"{self.site}\")"
+    
+    
+    def unpack(self):
+        return (self.id, self.main_user, self.site, self.username, self.password)
