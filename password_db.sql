@@ -149,7 +149,7 @@ BEGIN
 	UPDATE credentials c
     SET site = IFNULL(site, c.site),
 		username = IFNULL(username, c.username),
-        encrypted_password = IFNULL(password, c.password)
+        encrypted_password = IFNULL(encrypted_password, c.encrypted_password)
     WHERE c.id = credential_id;
 END$$
 
