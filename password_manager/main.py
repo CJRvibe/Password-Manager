@@ -6,7 +6,7 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from .query import SQLProcedures, DatabaseConnection, User, Credential
-from .exceptions import NotLoggedIn
+from . import custom_errors
 
 
 class PasswordManagerInterface:
@@ -21,7 +21,7 @@ class PasswordManagerInterface:
 
     def __logged_in(self):
         if self.__user.id == None:
-            raise NotLoggedIn("Login before calling this function")
+            raise custom_errors.NotLoggedIn("Login before calling this function")
         
     
     def __find_salt(self):
