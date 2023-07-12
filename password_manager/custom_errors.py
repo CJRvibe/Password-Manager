@@ -4,3 +4,7 @@ class NotLoggedIn(Exception):
 
 class InvalidValue(Exception):
     pass
+
+
+class NoUserFound(Exception):
+    pass

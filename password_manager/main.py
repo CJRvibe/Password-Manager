@@ -45,6 +45,7 @@ class PasswordManagerInterface:
     
     def login(self, username, password):
         user = self.__db.call_SQL_procedure(SQLProcedures.GET_USER, (username, ))
+        if hash == None: raise custom_errors.NoUserFound(f"Unable to find a user with username {username}")
         hash = user[3]
         try:
             self.__ph.verify(hash, password)
